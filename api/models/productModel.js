@@ -5,7 +5,7 @@ const variantSchema = new mongoose.Schema({
     name: { type: String, required: true },
     price: { type: Number, required: true },
     stock: { type: Number, required: true },
-    images: [{ type: String }] // Array of image paths for the variant
+    images: [{ type: String }] 
 });
 
 const reviewSchema = new mongoose.Schema({
@@ -21,12 +21,12 @@ const productSchema = new mongoose.Schema({
     id: { type: String, required: true, unique: true },
     name: { type: String, required: true },
     description: { type: String, required: true },
-    image: { type: String, required: true }, // Main product image
+    image: { type: String, required: true }, 
     category: { type: String, required: true },
     basePrice: { type: Number, required: true },
-    variants: [variantSchema], // Array of variant objects
-    specifications: { type: mongoose.Schema.Types.Mixed }, // Flexible for various specs
-    reviews: [reviewSchema], // Array of review objects
+    variants: [variantSchema],
+    specifications: { type: mongoose.Schema.Types.Mixed },
+    reviews: [reviewSchema],
     averageRating: { type: Number, default: 0 }
 });
 
