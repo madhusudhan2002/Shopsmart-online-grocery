@@ -1061,6 +1061,8 @@ function renderCheckoutSummary() {
     checkoutTotalSpan.textContent = Math.max(0, finalTotal).toFixed(2); 
 }
 
+// ... (your existing script.js code) ...
+
 placeOrderBtn.addEventListener('click', () => {
     if (cart.length === 0) {
         checkoutMessage.className = 'message error';
@@ -1075,7 +1077,7 @@ placeOrderBtn.addEventListener('click', () => {
 
     const paymentMethod = paymentMethodSelect.value;
     if (paymentMethod === 'card') {
-        const cardNumber = document.getElementById('card-number').value.replace(/\s/g, ''); // Remove spaces
+        const cardNumber = document.getElementById('card-number').value.replace(/\s/g, '');
         const cardExpiry = document.getElementById('card-expiry').value;
         const cardCvv = document.getElementById('card-cvv').value;
         if (!cardNumber || !cardExpiry || !cardCvv) {
@@ -1083,18 +1085,26 @@ placeOrderBtn.addEventListener('click', () => {
             checkoutMessage.textContent = 'Please fill all card details.';
             return;
         }
+        // Basic validation for card number length and digits
         if (cardNumber.length < 16 || isNaN(cardNumber)) {
-             checkoutMessage.className = 'message error';
-             checkoutMessage.textContent = 'Invalid card number.';
-             return;
+            checkoutMessage.className = 'message error';
+            checkoutMessage.textContent = 'Invalid card number. Must be 16 digits.';
+            return;
         }
+        // Basic validation for expiry date format and future date
         const [month, year] = cardExpiry.split('/');
-        const currentYear = new Date().getFullYear() % 100; 
-        const currentMonth = new Date().getMonth() + 1; 
+        const currentYear = new Date().getFullYear() % 100; // Get last two digits of current year
+        const currentMonth = new Date().getMonth() + 1; // Get current month (1-12)
 
         if (!month || !year || isNaN(month) || isNaN(year) || month < 1 || month > 12 || year < currentYear || (year === currentYear && month < currentMonth)) {
             checkoutMessage.className = 'message error';
-            checkoutMessage.textContent = 'Invalid expiry date.';
+            checkoutMessage.textContent = 'Invalid expiry date. Must be MM/YY and a future date.';
+            return;
+        }
+        // Basic validation for CVV
+        if (cardCvv.length !== 3 || isNaN(cardCvv)) {
+            checkoutMessage.className = 'message error';
+            checkoutMessage.textContent = 'Invalid CVV. Must be 3 digits.';
             return;
         }
 
@@ -1105,12 +1115,50 @@ placeOrderBtn.addEventListener('click', () => {
             checkoutMessage.textContent = 'Please enter UPI ID.';
             return;
         }
+        // Basic UPI ID format validation
         if (!/^[a-zA-Z0-9\.\-]+@[a-zA-Z0-9\-]+$/.test(upiId)) {
             checkoutMessage.className = 'message error';
             checkoutMessage.textContent = 'Invalid UPI ID format.';
             return;
         }
     }
+
+    // Disable the place order button to prevent multiple clicks
+    placeOrderBtn.disabled = true;
+    checkoutMessage.className = 'message info'; // Use 'info' for a neutral processing message
+    checkoutMessage.textContent = 'Processing your order... Please wait.';
+
+    // Simulate a network request delay (e.g., 2-3 seconds)
+    setTimeout(() => {
+        const isSuccess = Math.random() > 0.1; // 90% chance of success
+
+        if (isSuccess) {
+            checkoutMessage.className = 'message success';
+            const orderId = `ORD${Date.now().toString().slice(-8)}`; // Generate a simple unique order ID
+            checkoutMessage.textContent = `Order placed successfully! Your Order ID is ${orderId}.`;
+
+            // Clear the cart and save
+            cart = [];
+            saveCart(); // This also updates the cart count in the header
+
+            // Start the mock order tracking
+            startMockOrderTracking(orderId);
+
+            // Redirect to tracking section after a short delay
+            setTimeout(() => {
+                checkoutMessage.textContent = ''; // Clear message before redirect
+                showSection('order-tracking-section');
+                // Re-enable the button if the user navigates back later,
+                // or if you want to reset the form for a new order
+                placeOrderBtn.disabled = false;
+            }, 3000); // Wait 3 seconds to show success message before redirecting
+        } else {
+            checkoutMessage.className = 'message error';
+            checkoutMessage.textContent = 'Payment failed. Please try again or choose a different method.';
+            placeOrderBtn.disabled = false; // Re-enable button on failure
+        }
+    }, 2000); // Simulate a 2-second processing delay
+
 
 
     checkoutMessage.className = 'message';
