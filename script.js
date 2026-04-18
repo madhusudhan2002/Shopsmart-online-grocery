@@ -63,14 +63,34 @@ function renderStars(rating, maxStars = 5) {
 }
 
 // --- Initial Setup ---
-document.addEventListener('DOMContentLoaded', () => {
-    updateCartCount();
-    showSection('products-section'); 
-    const storedUser = localStorage.getItem('shopSmartUser');
-    if (storedUser) {
-        currentUser = JSON.parse(storedUser);
-        authLink.textContent = `Hi, ${currentUser.fullName} (Logout)`;
-    }
+document.addEventListener("DOMContentLoaded", () => {
+
+    const loginForm = document.getElementById('login-form');
+    const registerForm = document.getElementById('register-form');
+
+    registerForm.addEventListener('submit', async (e) => {
+        console.log("Register clicked"); // MUST print
+        e.preventDefault();
+
+        const name = document.getElementById('register-name').value;
+        const email = document.getElementById('register-email').value;
+        const password = document.getElementById('register-password').value;
+
+        try {
+            const res = await fetch('http://localhost:5000/api/users/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, email, password })
+            });
+
+            const data = await res.json();
+            console.log("Response:", data);
+
+        } catch (err) {
+            console.error(err);
+        }
+    });
+
 });
 
 // --- Navigation Handling ---
@@ -123,51 +143,76 @@ showLoginBtn.addEventListener('click', () => {
     authMessage.textContent = '';
 });
 
-loginForm.addEventListener('submit', (e) => {
+loginForm.addEventListener('submit', async (e) => {
     e.preventDefault();
+
     const email = document.getElementById('login-email').value;
     const password = document.getElementById('login-password').value;
-    if (email === 'user@example.com' && password === 'password123') {
-        currentUser = { id: 'mockuser1', fullName: 'Mock User', email: email };
-        localStorage.setItem('shopSmartUser', JSON.stringify(currentUser));
-        authMessage.className = 'message success';
-        authMessage.textContent = 'Login successful! Redirecting...';
-        authLink.textContent = `Hi, ${currentUser.fullName} (Logout)`;
-        setTimeout(() => {
-            authMessage.textContent = '';
-            showSection('products-section');
-            loginForm.reset();
-            registerForm.reset();
-        }, 1500);
-    } else {
-        authMessage.className = 'message error';
-        authMessage.textContent = 'Invalid email or password.';
+
+    try {
+        const res = await fetch('http://localhost:5000/api/users/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password })
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+            currentUser = data.user;
+            localStorage.setItem('shopSmartUser', JSON.stringify(currentUser));
+
+            authMessage.className = 'message success';
+            authMessage.textContent = 'Login successful!';
+
+            authLink.textContent = `Hi, ${currentUser.name} (Logout)`;
+
+            setTimeout(() => {
+                showSection('products-section');
+            }, 1000);
+
+        } else {
+            authMessage.className = 'message error';
+            authMessage.textContent = data.message;
+        }
+
+    } catch (err) {
+        console.error(err);
     }
 });
 
-registerForm.addEventListener('submit', (e) => {
+registerForm.addEventListener('submit', async (e) => {
     e.preventDefault();
-    const fullName = document.getElementById('register-name').value;
+
+    const name = document.getElementById('register-name').value;
     const email = document.getElementById('register-email').value;
     const password = document.getElementById('register-password').value;
-    if (localStorage.getItem('shopSmartUser') && JSON.parse(localStorage.getItem('shopSmartUser')).email === email) {
-        authMessage.className = 'message error';
-        authMessage.textContent = 'User with this email already exists.';
-        return;
-    }
 
-    currentUser = { id: 'mockuser_new_' + Date.now(), fullName: fullName, email: email };
-    localStorage.setItem('shopSmartUser', JSON.stringify(currentUser));
-    authMessage.className = 'message success';
-    authMessage.textContent = 'Registration successful! You are now logged in.';
-    authLink.textContent = `Hi, ${currentUser.fullName} (Logout)`;
-    setTimeout(() => {
-        authMessage.textContent = '';
-        showSection('products-section');
-        loginForm.reset();
-        registerForm.reset();
-    }, 1500);
+    console.log("Register clicked"); // debug
+
+    try {
+        const res = await fetch('http://localhost:5000/api/users/register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, email, password })
+        });
+
+        const data = await res.json();
+        console.log(data);
+
+        if (res.ok) {
+            authMessage.className = 'message success';
+            authMessage.textContent = 'Registered successfully! Please login.';
+        } else {
+            authMessage.className = 'message error';
+            authMessage.textContent = data.message;
+        }
+
+    } catch (err) {
+        console.error(err);
+    }
 });
+
 const productListDiv = document.getElementById('product-list');
 const categoryFilter = document.getElementById('category-filter');
 const sortBy = document.getElementById('sort-by');
